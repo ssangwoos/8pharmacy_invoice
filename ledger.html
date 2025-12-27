@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>거래처별 장부 조회 | 우리약국</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+
+<header>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <a href="index.html" style="color: #333; text-decoration: none; font-size: 1.2rem;">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1>장부 상세 조회</h1>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <button class="btn-text"><i class="fas fa-file-excel"></i> 엑셀 다운로드</button>
+    </div>
+</header>
+
+<div class="main-content" style="max-width: 1100px;">
+    
+    <div class="filter-bar">
+        <select id="vendorFilter" onchange="filterLedger()">
+            <option value="all">전체 거래처</option>
+            <option value="유한양행">유한양행</option>
+            <option value="종근당">종근당</option>
+            <option value="녹십자">녹십자</option>
+            <option value="백제약품">백제약품</option>
+        </select>
+
+        <input type="month" id="monthFilter" value="2025-12" onchange="filterLedger()">
+    </div>
+
+    <div class="summary-row">
+        <div class="s-card">
+            <span>총 매입액 (입고)</span>
+            <strong id="sumBuy">0</strong>
+        </div>
+        <div class="s-card">
+            <span>총 결제액 (지출)</span>
+            <strong id="sumPay" style="color: #dc2626;">0</strong>
+        </div>
+        <div class="s-card highlight">
+            <span>현재 잔액 (최종)</span>
+            <strong id="sumBalance">0</strong>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="data-grid">
+            <thead>
+                <tr>
+                    <th width="110">날짜</th>
+                    <th width="60">구분</th>
+                    <th width="120">거래처</th>
+                    <th>적요(메모)</th>
+                    <th width="60" class="text-right">수량</th>
+                    <th class="text-right">공급가액</th>
+                    <th class="text-right">세액</th>
+                    <th class="text-right">합계금액</th>
+                    <th class="text-right" style="background:#f0f9ff;">잔액</th> 
+                    <th width="50" style="text-align:center;">증빙</th>
+                </tr>
+            </thead>
+            <tbody id="ledgerTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <div class="quick-entry-bar">
+        <div class="entry-title">⚡ 빠른 등록</div>
+        <form id="quickForm" class="entry-form" onsubmit="return false;">
+            <input type="date" id="qDate" class="entry-input" style="width: 130px;">
+            
+            <select id="qType" class="entry-input" style="width: 80px;">
+                <option value="buy">입고</option>
+                <option value="pay">결제</option>
+                <option value="return">반품</option>
+            </select>
+            
+            <input type="text" id="qVendor" class="entry-input" placeholder="거래처명" list="vendorList" style="width: 120px;">
+            <datalist id="vendorList">
+                <option value="유한양행">
+                <option value="종근당">
+                <option value="녹십자">
+                <option value="백제약품">
+            </datalist>
+            
+            <input type="text" id="qMemo" class="entry-input" placeholder="내용(적요)" style="flex: 1;">
+
+            <input type="number" id="qQty" class="entry-input money-input" placeholder="수량" style="width: 70px;">
+            
+            <input type="text" id="qAmount" class="entry-input money-input" placeholder="금액 입력" 
+                   onkeyup="formatCurrency(this)" onkeydown="checkEnter(event)" style="width: 120px;">
+            
+            <button type="button" class="btn-add" onclick="saveQuickAdd()">
+                <i class="fas fa-plus"></i> 추가
+            </button>
+        </form>
+    </div>
+    
+    <div id="bottomAnchor" style="height: 20px;"></div>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if(typeof initLedgerPage === 'function') initLedgerPage();
+    });
+</script>
+
+</body>
+</html>

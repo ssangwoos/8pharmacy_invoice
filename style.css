@@ -1,0 +1,527 @@
+/* style.css - 전체 통합 버전 */
+
+/* =========================================
+   1. 공통 기본 스타일 (Base Styles)
+   ========================================= */
+:root {
+    --primary-color: #2563eb;
+    --bg-color: #f3f4f6;
+    --border-color: #e5e7eb;
+}
+
+body { 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
+    height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden; 
+}
+
+/* 상단 헤더 공통 */
+header { 
+    background: white; 
+    padding: 10px 20px; 
+    border-bottom: 1px solid var(--border-color); 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    height: 50px; 
+    flex-shrink: 0; /* 헤더 크기 고정 */
+}
+header h1 { margin: 0; font-size: 1.2rem; color: #333; }
+.header-status { font-size: 0.9rem; color: #888; }
+
+/* =========================================
+   2. 입력 화면 (write.html) 전용 스타일
+   ========================================= */
+
+/* 메인 컨테이너 (스플릿 뷰) */
+.container {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 50px);
+    overflow: hidden;
+}
+
+/* 1. 사이드바 (대기 목록) */
+.sidebar {
+    width: 250px;
+    background: white;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* 폭 줄어듦 방지 */
+}
+
+.sidebar-header {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    background: #fcfcfc;
+}
+.sidebar-header h3 { margin: 0; font-size: 1rem; color: #555; }
+
+.queue-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.queue-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.queue-item:hover { background-color: #f0f7ff; }
+
+/* 선택된 항목 스타일 */
+.queue-item.active {
+    background-color: #e0eaff;
+    border-left: 4px solid var(--primary-color);
+}
+
+.q-title { font-weight: bold; font-size: 0.95rem; display: block; margin-bottom: 4px;}
+.q-date { font-size: 0.8rem; color: #888; }
+.q-badge { 
+    display: inline-block; padding: 2px 6px; 
+    border-radius: 4px; background: #eee; 
+    font-size: 0.7rem; color: #666; margin-left: 5px; 
+}
+
+/* 2. 워크스페이스 (이미지 + 폼 영역 감싸기) */
+.workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 기존 CSS 호환성 유지 및 수정 */
+.image-section { flex: 1.5; position: relative; background: #222; } /* 배경 어둡게 */
+.form-section { flex: 1; max-width: 450px; min-width: 300px; }
+
+/* 이미지가 없을 때 안내 메시지 */
+.no-selection-msg {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    text-align: center;
+    line-height: 1.6;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* 좌측: 이미지 뷰어 영역 */
+.image-section { 
+    flex: 1.5; 
+    background: #333; 
+    position: relative; 
+    overflow: hidden; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.image-viewer { 
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    position: relative; 
+    display: flex;       /* 이미지를 중앙에 두기 위해 */
+    align-items: center; /* 이미지를 중앙에 두기 위해 */
+    justify-content: center; /* 이미지를 중앙에 두기 위해 */
+}
+
+.image-viewer img { 
+    max-width: 90%; 
+    transition: transform 0.2s; 
+    cursor: grab; 
+    display: block; 
+}
+
+/* 이미지 제어 버튼들 */
+.img-controls { 
+    position: absolute; 
+    bottom: 20px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    display: flex; 
+    gap: 10px; 
+    background: rgba(0,0,0,0.6); 
+    padding: 8px; 
+    border-radius: 20px; 
+    z-index: 10;
+}
+.btn-icon { 
+    background: none; 
+    border: 1px solid white; 
+    color: white; 
+    width: 30px; 
+    height: 30px; 
+    border-radius: 50%; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+.btn-icon:hover { background: rgba(255,255,255,0.2); }
+
+/* 우측: 데이터 입력 폼 영역 */
+.form-section { 
+    flex: 1; 
+    background: white; 
+    padding: 20px; 
+    overflow-y: auto; /* 내용 많으면 스크롤 */
+    border-left: 1px solid var(--border-color); 
+    max-width: 500px; 
+    box-sizing: border-box;
+}
+
+/* 폼 요소 스타일 */
+.form-group { margin-bottom: 15px; }
+label { display: block; font-size: 0.9rem; color: #666; margin-bottom: 5px; }
+input, select { 
+    width: 100%; 
+    padding: 10px; 
+    border: 1px solid var(--border-color); 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    font-size: 1rem; 
+}
+input:focus { border-color: var(--primary-color); outline: none; }
+
+.row { display: flex; gap: 10px; }
+.col { flex: 1; }
+.divider { margin: 20px 0; border: 0; border-top: 1px dashed #ccc; }
+
+.money-input { text-align: right; font-weight: bold; font-family: monospace; }
+
+/* 저장 버튼 */
+.btn-save { 
+    width: 100%; 
+    padding: 15px; 
+    background: var(--primary-color); 
+    color: white; 
+    border: none; 
+    border-radius: 8px; 
+    font-size: 1.1rem; 
+    font-weight: bold; 
+    cursor: pointer; 
+    margin-top: 20px; 
+    margin-bottom: 30px;
+}
+.btn-save:active { opacity: 0.9; }
+
+/* =========================================
+   3. 대시보드 (index.html) 전용 스타일
+   ========================================= */
+
+.dashboard-body {
+    background-color: #f3f4f6;
+    overflow-y: auto; /* 대시보드는 전체 스크롤 허용 */
+    display: block; /* Flex 해제 */
+}
+
+/* 네비게이션 바 */
+.navbar {
+    background: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.logo { font-weight: 900; font-size: 1.2rem; color: var(--primary-color); }
+.nav-links a { text-decoration: none; color: #666; margin-left: 20px; font-weight: 500; }
+.nav-links a.active { color: var(--primary-color); }
+
+.main-content { padding: 20px; max-width: 800px; margin: 0 auto; }
+
+/* 알림 카드 */
+.alert-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    transition: transform 0.2s;
+    margin-bottom: 25px;
+}
+.alert-card:hover { transform: translateY(-3px); }
+.alert-icon { font-size: 2rem; background: rgba(255,255,255,0.2); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.alert-info h3 { margin: 0; font-weight: normal; font-size: 1.1rem; }
+.alert-info strong { font-size: 1.4rem; font-weight: bold; }
+.alert-info p { margin: 5px 0 0; font-size: 0.9rem; opacity: 0.8; }
+
+/* 통계 박스 */
+.stats-container { display: flex; gap: 15px; margin-bottom: 25px; }
+.stat-box { flex: 1; background: white; padding: 15px; border-radius: 10px; border: 1px solid #eee; text-align: center; }
+.stat-box span { display: block; font-size: 0.85rem; color: #888; margin-bottom: 5px; }
+.stat-box h2 { margin: 0; font-size: 1.2rem; }
+.stat-box.blue h2 { color: #2563eb; }
+.stat-box.red h2 { color: #dc2626; }
+.stat-box.green h2 { color: #059669; }
+
+/* 최근 내역 리스트 */
+.recent-list { background: white; border-radius: 12px; padding: 20px; border: 1px solid #eee; }
+.list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.btn-text { background: none; border: none; color: #888; cursor: pointer; }
+
+.transaction-list { list-style: none; padding: 0; margin: 0; }
+.t-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+.t-item:last-child { border-bottom: none; }
+.t-date { font-size: 0.9rem; color: #888; width: 50px; }
+.t-info { flex: 1; }
+.t-vendor { font-weight: bold; font-size: 1rem; color: #333; }
+.t-desc { font-size: 0.85rem; color: #888; margin-top: 2px; }
+.t-amount { font-weight: bold; font-family: monospace; font-size: 1.1rem; }
+.t-amount.plus { color: #2563eb; }
+.t-amount.minus { color: #dc2626; }
+
+/* 모바일용 하단 플로팅 버튼 */
+.fab-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+    text-decoration: none;
+    transition: transform 0.2s;
+    z-index: 200;
+}
+.fab-btn:hover { transform: scale(1.1); }
+
+/* =========================================
+   4. 반응형 (모바일) 처리
+   ========================================= */
+@media (max-width: 768px) {
+    /* write.html 모바일 */
+    .container { flex-direction: column; height: auto; overflow: auto; }
+    .image-section { flex: none; height: 40vh; min-height: 300px; }
+    .form-section { flex: none; border-left: none; border-top: 1px solid var(--border-color); padding-bottom: 50px; }
+    
+    /* index.html 모바일 */
+    .stats-container { flex-direction: column; }
+    .stat-box { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+    .stat-box span { margin-bottom: 0; }
+}
+
+/* --- ledger.html (장부 조회) 전용 스타일 --- */
+
+/* 1. 필터 바 */
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+.filter-bar select, .filter-bar input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+/* 2. 요약(Summary) 행 */
+.summary-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.s-card {
+    flex: 1;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.s-card span { font-size: 0.85rem; color: #666; }
+.s-card strong { font-size: 1.2rem; font-family: monospace; }
+.s-card.highlight { background-color: #e0eaff; border-color: #bfdbfe; }
+.s-card.highlight strong { color: var(--primary-color); }
+
+/* 3. 데이터 그리드 (테이블) */
+.table-container {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    overflow-x: auto; /* 모바일에서 가로 스크롤 허용 */
+}
+.data-grid {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px; /* 너무 찌그러지지 않게 최소 폭 설정 */
+}
+.data-grid th {
+    background: #f9fafb;
+    padding: 12px 10px;
+    text-align: left;
+    font-size: 0.9rem;
+    color: #555;
+    border-bottom: 2px solid #eee;
+    white-space: nowrap;
+}
+.data-grid td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.95rem;
+    color: #333;
+}
+.data-grid tr:hover { background-color: #f8f9fa; }
+
+/* 테이블 유틸리티 클래스 */
+.text-right { text-align: right; }
+.badge { 
+    padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; 
+}
+.badge.buy { background: #dbeafe; color: #1e40af; }    /* 입고: 파랑 */
+.badge.pay { background: #fee2e2; color: #991b1b; }    /* 지출: 빨강 */
+.badge.return { background: #f3f4f6; color: #374151; text-decoration: line-through; } /* 반품: 회색 */
+
+/* 금액 컬러링 */
+.amount-plus { color: #2563eb; }
+.amount-minus { color: #dc2626; }
+
+/* --- 모달 및 퀵 버튼 스타일 --- */
+
+/* 헤더에 들어갈 작은 버튼 */
+.btn-primary-sm {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.btn-primary-sm:hover { opacity: 0.9; }
+
+/* 모달 배경 (어둡게) */
+.modal-overlay {
+    display: none; /* 기본 숨김 */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+/* 모달 박스 */
+.modal-box {
+    background: white;
+    width: 90%;
+    max-width: 400px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9fafb;
+}
+.modal-header h3 { margin: 0; font-size: 1.1rem; }
+.close-btn {
+    background: none; border: none;
+    font-size: 1.5rem; cursor: pointer; color: #888;
+}
+.modal-body { padding: 20px; }
+
+/* --- ledger.html 하단 빠른 입력바 스타일 --- */
+
+.quick-entry-bar {
+    background-color: #eef2ff; /* 아주 연한 파란색 배경 */
+    border: 2px solid #c7d2fe;
+    border-top: none; /* 테이블과 이어지는 느낌 */
+    border-radius: 0 0 8px 8px; /* 아래쪽만 둥글게 */
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.entry-title {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.entry-form {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    width: 100%;
+}
+
+.entry-input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+.entry-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.btn-add {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+.btn-add:hover { background-color: #1d4ed8; }
+.btn-add:active { transform: scale(0.98); }
+
+/* 모바일 대응: 입력바가 세로로 배치되게 */
+@media (max-width: 768px) {
+    .quick-entry-bar { flex-direction: column; align-items: stretch; }
+    .entry-form { flex-direction: column; }
+    .entry-input { width: 100% !important; } /* 강제 넓이 조정 */
+}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>약국 거래명세서 관리 (대시보드)</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+
+<nav class="navbar">
+    <div class="logo">💊 우리약국 장부</div>
+    <div class="nav-links">
+        <a href="#" class="active">홈</a>
+        <a href="ledger.html">장부</a>
+        <a href="#">설정</a>
+    </div>
+</nav>
+
+<div class="main-content">
+    
+    <div class="alert-card" onclick="location.href='write.html'">
+        <div class="alert-icon"><i class="fas fa-camera"></i></div>
+        <div class="alert-info">
+            <h3>미처리 명세서가 <strong>5건</strong> 있어요!</h3>
+            <p>지금 정리하러 가기 &rarr;</p>
+        </div>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-box blue">
+            <span>이번 달 매입</span>
+            <h2>15,400,000</h2>
+        </div>
+        <div class="stat-box red">
+            <span>이번 달 지출</span>
+            <h2>12,100,000</h2>
+        </div>
+        <div class="stat-box green">
+            <span>예상 잔액</span>
+            <h2>3,300,000</h2>
+        </div>
+    </div>
+
+    <div class="recent-list">
+        <div class="list-header">
+            <h3>최근 거래 내역</h3>
+            <button class="btn-text" onclick="location.href='ledger.html'">
+                전체 장부 보기 &rarr;
+            </button>
+        </div>
+        <ul class="transaction-list">
+            <li class="t-item">
+                <div class="t-date">12.27</div>
+                <div class="t-info">
+                    <div class="t-vendor">유한양행</div>
+                    <div class="t-desc">정기 의약품 입고</div>
+                </div>
+                <div class="t-amount plus">+550,000</div>
+            </li>
+            <li class="t-item">
+                <div class="t-date">12.26</div>
+                <div class="t-info">
+                    <div class="t-vendor">국민카드</div>
+                    <div class="t-desc">11월 결제대금 출금</div>
+                </div>
+                <div class="t-amount minus">-2,400,000</div>
+            </li>
+            <li class="t-item">
+                <div class="t-date">12.25</div>
+                <div class="t-info">
+                    <div class="t-vendor">종근당</div>
+                    <div class="t-desc">반품 처리 (항생제 외)</div>
+                </div>
+                <div class="t-amount minus">-32,000</div>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<a href="write.html" class="fab-btn">
+    <i class="fas fa-plus"></i>
+</a>
+
+</body>
+</html>
