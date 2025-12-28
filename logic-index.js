@@ -247,12 +247,26 @@ async function loadPharmacyName() {
     }
 }
 
+// logic-index.js 의 updateUI 함수 수정
+
 function updateUI(name) {
     if (!name) return;
-    // 헤더의 .pharmacy-name-display 부분을 DB 값으로 교체
+
+    // 1. 기존 화면 글자들 변경
     const displays = document.querySelectorAll('.pharmacy-name-display');
     displays.forEach(el => el.innerText = name);
     
-    // 탭 타이틀도 변경
+    // 2. 브라우저 탭 제목 변경
     document.title = name + " - 스마트 장부";
+
+    // 3. [추가] 메타 태그 자동 반영 (공유 미리보기용)
+    const metaOgTitle = document.getElementById('meta-og-title');
+    const metaDesc = document.getElementById('meta-desc');
+
+    if (metaOgTitle) {
+        metaOgTitle.setAttribute('content', name + " 스마트 장부"); //
+    }
+    if (metaDesc) {
+        metaDesc.setAttribute('content', name + "의 실시간 데이터 관리 시스템입니다."); //
+    }
 }
