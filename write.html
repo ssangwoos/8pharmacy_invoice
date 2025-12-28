@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>거래명세서 입력 | 우리약국</title>
-    <link rel="stylesheet" href="style.css">
+    <title>명세서 상세 입력 |<span class="pharmacy-name-display"></span></title>
+    
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="style-write.css">
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 </head>
 <body>
 
@@ -19,108 +22,99 @@
         <a href="index.html" style="color: #333; text-decoration: none; font-size: 1.2rem;">
             <i class="fas fa-arrow-left"></i>
         </a>
-        <h1>명세서 입력</h1>
+        <h1>명세서 상세 입력</h1>
     </div>
 </header>
 
-<div class="container">
-    
-    <aside class="sidebar">
+<div class="container write-mode"> <aside class="sidebar">
         <div class="sidebar-header">
-            <h3>대기 목록 <span id="queueCount" style="color:var(--primary-color)">0</span></h3>
+            <h3>대기 목록 <span id="queueCount" style="color:#2563eb">0</span></h3>
         </div>
         <ul class="queue-list" id="queueList">
-            </ul>
+            <li style="padding:20px; text-align:center; color:#999;">로딩 중...</li>
+        </ul>
     </aside>
 
-    <main class="workspace">
+    <main class="workspace column-mode">
         
-        <section class="image-section">
-            <div class="image-viewer">
-                <img id="docImage" src="" alt="명세서 선택 필요" style="display:none;">
+        <section class="image-section-top">
+            <div class="image-viewer-wide" id="viewerBox">
+                <img id="docImage" src="" alt="명세서 이미지" style="display:none;">
                 <div class="no-selection-msg" id="noSelectionMsg">
-                    처리할 명세서를<br>좌측 목록에서 선택해주세요.
+                    좌측 목록에서 명세서를 선택하세요.
                 </div>
             </div>
-            
-            <div class="img-controls">
+            <div class="img-controls-floating">
                 <button class="btn-icon" onclick="zoomOut()"><i class="fas fa-minus"></i></button>
                 <button class="btn-icon" onclick="resetZoom()"><i class="fas fa-sync-alt"></i></button>
                 <button class="btn-icon" onclick="zoomIn()"><i class="fas fa-plus"></i></button>
             </div>
         </section>
 
-        <section class="form-section">
-            <form id="ledgerForm">
-                <div class="form-group">
-                    <label>거래 일자</label>
-                    <input type="date" id="dateInput" required>
-                </div>
-
-                <div class="form-group row">
-                    <div class="col">
+        <section class="form-section-bottom">
+            <div class="center-paper">
+                <div class="common-info-bar">
+                    <div class="c-group">
+                        <label>날짜</label>
+                        <input type="date" id="dateInput" style="width: 140px;">
+                    </div>
+                    <div class="c-group">
                         <label>구분</label>
-                        <select id="typeSelect" onchange="togglePaymentField()">
-                            <option value="buy" selected>입고(매입)</option>
+                        <select id="typeSelect" onchange="togglePaymentField()" style="width: 100px;">
+                            <option value="buy" selected>입고</option>
+                            <option value="pay">결제</option>
                             <option value="return">반품</option>
-                            <option value="pay">결제(지출)</option>
                         </select>
                     </div>
-                    <div class="col">
+                    <div class="c-group vendor-group">
                         <label>거래처</label>
-                        <input type="text" id="vendorInput" placeholder="예: 유한양행" list="vendorList">
-                        <datalist id="vendorList">
-                            <option value="유한양행">
-                            <option value="종근당">
-                            <option value="녹십자">
-                            <option value="백제약품">
-                        </datalist>
+                        <input type="text" id="vendorInput" list="vendorList" placeholder="거래처 검색/입력" autocomplete="off">
+                        <datalist id="vendorList"></datalist>
                     </div>
                 </div>
 
-                <hr class="divider">
-                
-                <div class="form-group">
-                    <label>수량 (선택)</label>
-                    <input type="number" id="qtyInput" class="money-input" placeholder="0" style="text-align: right;">
+                <div class="item-list-area">
+                    <table class="item-table wide-table">
+                        <thead>
+                            <tr>
+                                <th>적요</th> 
+                                <th style="width: 80px;">수량</th>
+                                <th style="width: 120px;">공급가</th>
+                                <th style="width: 100px;">세액</th>
+                                <th style="width: 130px;">합계</th>
+                                <th class="text-center" style="width: 60px;">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemTableBody">
+                            <tr class="input-row">
+                                <td><input type="text" id="inMemo" placeholder="품목명 입력..."></td>
+                                <td><input type="number" id="inQty" placeholder="0" class="text-right"></td>
+                                <td><input type="text" id="inSupply" class="money-input text-right" placeholder="0" onkeyup="formatCurrency(this); calcInSupply();"></td>
+                                <td><input type="text" id="inVat" class="money-input text-right" placeholder="0" onkeyup="formatCurrency(this); calcInVat();"></td>
+                                <td><input type="text" id="inTotal" class="money-input text-right" placeholder="0" onkeyup="formatCurrency(this); calcInTotal();" style="font-weight:bold; color:#2563eb;"></td>
+                                <td class="text-center">
+                                    <button type="button" class="btn-add-table" onclick="addItem()"><i class="fas fa-plus"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="form-group">
-                    <label>합계 금액</label>
-                    <input type="text" id="totalInput" class="money-input" placeholder="0" onkeyup="formatCurrency(this); autoCalculate();">
-                </div>
-
-                <div class="row">
-                    <div class="col form-group">
-                        <label>공급가액</label>
-                        <input type="text" id="supplyInput" class="money-input" placeholder="0" readonly style="background:#f9f9f9">
+                <div class="footer-summary small-padding">
+                    <div class="summary-text">
+                        <span>공급가 <b id="sumSupply">0</b></span>
+                        <span>세액 <b id="sumVat">0</b></span>
+                        <span class="grand-total">합계 <b id="sumTotal">0</b></span>
                     </div>
-                    <div class="col form-group">
-                        <label>부가세</label>
-                        <input type="text" id="vatInput" class="money-input" placeholder="0" readonly style="background:#f9f9f9">
-                    </div>
+                    <button type="button" class="btn-save-all" onclick="saveAllItems()">저장 (완료)</button>
                 </div>
-
-                <div class="form-group" id="paymentMethodGroup" style="display:none;">
-                    <label>결제 수단</label>
-                    <select>
-                        <option>국민카드</option>
-                        <option>이체</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>메모</label>
-                    <input type="text" id="memoInput" placeholder="특이사항 입력">
-                </div>
-
-                <button type="button" class="btn-save" onclick="saveData()">저장 (완료처리)</button>
-            </form>
+            </div>
         </section>
     </main>
 </div>
 
-<script src="script.js"></script>
+<script src="firebase-config.js"></script>
+<script src="logic-write.js"></script>
 
 </body>
 </html>
