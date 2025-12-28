@@ -36,59 +36,132 @@ async function loadLedgerData() {
     }
 }
 
-// [화면 렌더링 함수] 10개씩 페이징하며 하단이 최신이게 정렬
+/* logic-ledger.js - 품목별 나열 및 Hover 기능 추가 버전 */
+
 function renderLedger() {
     const tableBody = document.getElementById('ledgerTableBody');
     const start = document.getElementById('startDate')?.value || '';
     const end = document.getElementById('endDate')?.value || '';
-
-    // 기간 필터링
+    const searchKeyword = document.getElementById('searchInput')?.value.toLowerCase() || ''; // 검색어 가져오기
+    const isSearching = searchKeyword.length > 0;
+    // 1. 기간 필터링
     let filtered = allData.filter(item => (!start || item.date >= start) && (!end || item.date <= end));
-
-    // 페이징 계산 (최신 10개가 1페이지)
-    const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
-    const reversed = [...filtered].reverse(); 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const pageItems = reversed.slice(startIndex, startIndex + itemsPerPage);
-    const finalDisplayItems = pageItems.reverse(); // 하단이 최신이게 재정렬
-
+    
     let html = '';
-    let totalBuy = 0, totalPay = 0, runningBalance = 0;
+    let displayBuy = 0, displayPay = 0, runningBalance = 0;
 
-    // 잔액은 전체 데이터를 기준으로 순차 계산
+    // 2. 전체를 돌며 잔액을 먼저 계산하고, 검색 조건에 맞는 줄만 HTML에 추가
     filtered.forEach(item => {
-        const amount = Number(item.total) || 0;
-        const isBuy = (item.type === 'buy');
-        if (isBuy) { totalBuy += amount; runningBalance += amount; }
-        else { totalPay += amount; runningBalance -= amount; }
+        const rowItems = (item.items && item.items.length > 0) 
+            ? item.items 
+            : [{ memo: item.memo, qty: item.qty || 1, supply: item.supply, vat: item.vat, total: item.total }];
 
-        if (finalDisplayItems.some(p => p.id === item.id)) {
-            html += `
-                <tr class="ledger-row">
-                    <td style="text-align:center;">${item.date}</td>
-                    <td style="text-align:center;">${getBadgeHtml(item.type)}</td>
-                    <td style="text-align:center;">${item.vendor}</td>
-                    <td style="text-align:left; padding-left:10px;">${item.memo || ''}</td>
-                    <td style="text-align:center;">${item.qty || 0}</td>
-                    <td style="text-align:right;">${(Number(item.supply) || 0).toLocaleString()}</td>
-                    <td style="text-align:right;">${(Number(item.vat) || 0).toLocaleString()}</td>
-                    <td style="color:#2563eb; font-weight:bold; text-align:right;">${isBuy ? amount.toLocaleString() : ''}</td>
-                    <td style="color:#dc2626; font-weight:bold; text-align:right;">${!isBuy ? amount.toLocaleString() : ''}</td>
-                    <td style="font-weight:700; text-align:right; background:#f9fafb;">${runningBalance.toLocaleString()}</td>
-                    <td style="text-align:center;">${item.img ? `<a href="${item.img}" target="_blank">📄</a>` : '-'}</td>
-                    <td style="text-align:center;"><button onclick="deleteDoc('${item.id}')" style="color:#ef4444; border:none; background:none; cursor:pointer;">삭제</button></td>
-                </tr>`;
-        }
+        rowItems.forEach((subItem) => {
+            const amount = Number(subItem.total) || 0;
+            const isBuy = (item.type === 'buy');
+
+            // [핵심] 잔액은 검색 여부와 상관없이 '전체 흐름'을 따라 누적 계산
+            if (isBuy) runningBalance += amount;
+            else runningBalance -= amount;
+
+            // [검색 필터] 거래처명 또는 품목명에 검색어가 포함되어 있는지 확인
+            const isMatch = item.vendor.toLowerCase().includes(searchKeyword) || 
+                            (subItem.memo && subItem.memo.toLowerCase().includes(searchKeyword));
+
+            if (isMatch) {
+                // 화면에 표시될 금액들만 별도로 합산 (상단 카드용)
+                if (isBuy) displayBuy += amount;
+                else displayPay += amount;
+
+                // 그룹화를 위한 ID (아까 만든 img 기준)
+                const groupId = item.img || item.id;
+
+                html += `
+                    <tr class="ledger-row" 
+                        data-parent-id="${groupId}" 
+                        onmouseover="highlightGroup('${groupId}')" 
+                        onmouseout="removeHighlight()">
+                        <td style="text-align:center;">${item.date}</td>
+                        <td style="text-align:center;">${getBadgeHtml(item.type)}</td>
+                        <td style="text-align:center;">${item.vendor}</td>
+                        <td style="text-align:left; padding-left:10px;">${subItem.memo || ''}</td>
+                        <td style="text-align:center;">${subItem.qty || 0}</td>
+                        <td style="text-align:right;">${(Number(subItem.supply) || 0).toLocaleString()}</td>
+                        <td style="text-align:right;">${(Number(subItem.vat) || 0).toLocaleString()}</td>
+                        <td style="color:#2563eb; font-weight:bold; text-align:right;">${isBuy ? amount.toLocaleString() : ''}</td>
+                        <td style="color:#dc2626; font-weight:bold; text-align:right;">${!isBuy ? amount.toLocaleString() : ''}</td>
+                        <td style="font-weight:700; text-align:right; background:#f9fafb;">${runningBalance.toLocaleString()}</td>
+                        <td style="text-align:center;">${item.img ? `<a href="${item.img}" target="_blank">📄</a>` : '-'}</td>
+                        <td style="text-align:center;">
+                            <div style="display: flex; justify-content: center; gap: 8px;">
+                                <button onclick="openEditModal('${item.id}')" style="color:#2563eb; border:none; background:none; cursor:pointer;"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteEntry('${item.id}')" style="color:#ef4444; border:none; background:none; cursor:pointer;"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+            }
+        });
     });
 
-    tableBody.innerHTML = html || '<tr><td colspan="12" style="text-align:center; padding:30px;">내역이 없습니다.</td></tr>';
+    tableBody.innerHTML = html || '<tr><td colspan="12" style="text-align:center; padding:30px;">검색 결과가 없습니다.</td></tr>';
     
-    // 요약 및 페이지 버튼 업데이트
-    if(document.getElementById('sumBuy')) document.getElementById('sumBuy').innerText = totalBuy.toLocaleString();
-    if(document.getElementById('sumPay')) document.getElementById('sumPay').innerText = totalPay.toLocaleString();
-    if(document.getElementById('sumBalance')) document.getElementById('sumBalance').innerText = (totalBuy - totalPay).toLocaleString();
-    renderPaginationUI(totalPages);
+    // 3. 상단 요약 카드 업데이트 (검색된 품목들의 합계로 갱신)
+    if(document.getElementById('sumBuy')) document.getElementById('sumBuy').innerText = displayBuy.toLocaleString();
+    if(document.getElementById('sumPay')) document.getElementById('sumPay').innerText = displayPay.toLocaleString();
+    if(document.getElementById('sumBalance')) document.getElementById('sumBalance').innerText = (displayBuy - displayPay).toLocaleString();
 }
+
+
+// [수정] 그룹 내 모든 항목의 금액을 합산하여 툴팁에 표시
+function highlightGroup(groupId) {
+    if (!groupId) return;
+    
+    // 1. 하이라이트 효과
+    const safeId = CSS.escape(groupId);
+    const elements = document.querySelectorAll(`tr[data-parent-id="${safeId}"]`);
+    elements.forEach(el => el.classList.add('group-active'));
+
+    // 2. 그룹 합계 계산 로직
+    // allData에서 동일한 img(또는 groupId)를 가진 모든 항목을 추출합니다.
+    const groupItems = allData.filter(d => (d.img || d.id) === groupId);
+    
+    if (groupItems.length > 0) {
+        // 그룹 내 모든 항목의 total 값을 합산
+        const groupTotal = groupItems.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+        const vendorName = groupItems[0].vendor; // 거래처명은 첫 번째 항목에서 참조
+
+        const tooltip = document.getElementById('groupTooltip');
+        tooltip.innerHTML = `
+            <div style="margin-bottom:4px; border-bottom:1px solid #475569; padding-bottom:4px;">
+                <span style="color:#94a3b8;">거래처:</span> ${vendorName}
+            </div>
+            <div>
+                <span style="color:#94a3b8;">명세서 총 합계:</span> 
+                <span style="color:#60a5fa; font-size:1.1em; margin-left:5px;">${groupTotal.toLocaleString()}원</span>
+            </div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+                (총 ${groupItems.length}개 품목)
+            </div>
+        `;
+        tooltip.style.display = 'block';
+    }
+}
+
+// [수정] 툴팁 숨기기
+function removeHighlight() {
+    document.querySelectorAll('.ledger-row').forEach(el => el.classList.remove('group-active'));
+    document.getElementById('groupTooltip').style.display = 'none';
+}
+
+// [추가] 마우스 움직임에 따라 툴팁 위치 이동
+document.addEventListener('mousemove', function(e) {
+    const tooltip = document.getElementById('groupTooltip');
+    if (tooltip.style.display === 'block') {
+        tooltip.style.left = (e.clientX + 15) + 'px'; // 커서 오른쪽 15px
+        tooltip.style.top = (e.clientY + 15) + 'px';  // 커서 아래쪽 15px
+    }
+});
+
 
 // [도움 함수들]
 // [보조 3] 구분(Type) 뱃지 생성 함수
@@ -152,28 +225,66 @@ function updateVendorFilter(data) {
 }
 
 /* [수정] 거래처/날짜 필터 변경 시 실행되는 함수 */
+/* logic-ledger.js: 거래처 선택 시 퀵등록 readonly 처리 */
+
 function filterLedger() {
-    // 1. 페이지를 1페이지로 초기화합니다.
+    // 1. 페이지를 1페이지로 초기화
     currentPage = 1; 
 
-    // 2. 단순히 화면을 가리는 게 아니라, DB에서 해당 거래처 데이터를 새로 가져옵니다.
-    // 이렇게 해야 선택된 거래처의 '전체 기간' 잔액이 정확히 계산됩니다.
+    // 2. 퀵등록 거래처 칸 연동 및 수정 방지(readonly)
+    const vendorFilter = document.getElementById('vendorFilter');
+    const qVendorInput = document.getElementById('qVendor');
+    
+    if (vendorFilter && qVendorInput) {
+        const selectedVendor = vendorFilter.value;
+        
+        if (selectedVendor !== 'all') {
+            qVendorInput.value = selectedVendor; 
+            qVendorInput.readOnly = true; // 수정 불가 모드
+            qVendorInput.style.backgroundColor = "#f1f5f9"; // 연한 회색 (잠금 표시)
+            qVendorInput.style.color = "#475569"; // 글자색 흐리게
+        } else {
+            qVendorInput.value = ""; 
+            qVendorInput.readOnly = false; // 직접 입력 가능 모드
+            qVendorInput.style.backgroundColor = "white";
+            qVendorInput.style.color = "black";
+        }
+    }
+
+    // 3. DB 데이터 새로 로드
     loadLedgerData(); 
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 날짜 자동 세팅 로직 (기존 유지)
+    // 1. 현재 한국 시간 기준으로 날짜 객체 생성
     const now = new Date();
-    const today = new Date(now.getTime() + (9 * 60 * 60 * 1000)).toISOString().split('T')[0];
-    if(document.getElementById('startDate')) document.getElementById('startDate').value = today.substring(0, 7) + "-01";
-    if(document.getElementById('endDate')) document.getElementById('endDate').value = today;
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0 (1월) ~ 11 (12월)
 
-    // [변경] 바로 데이터를 부르지 않고, 거래처 목록만 먼저 가져와서 필터를 채웁니다.
+    // 2. 시작일(1일) 조립: "YYYY-MM-01"
+    const firstDay = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+
+    // 3. 말일 계산: 다음 달의 0번째 날 = 이번 달의 마지막 날
+    const lastDayDate = new Date(year, month + 1, 0);
+    const lastDayYear = lastDayDate.getFullYear();
+    const lastDayMonth = String(lastDayDate.getMonth() + 1).padStart(2, '0');
+    const lastDayDay = String(lastDayDate.getDate()).padStart(2, '0');
+    
+    // 최종 조립: "YYYY-MM-DD" (ISO 문자열 변환 없이 직접 조립하여 오류 차단)
+    const lastDay = `${lastDayYear}-${lastDayMonth}-${lastDayDay}`;
+
+    // 4. HTML 필터에 값 할당
+    if(document.getElementById('startDate')) document.getElementById('startDate').value = firstDay;
+    if(document.getElementById('endDate')) document.getElementById('endDate').value = lastDay;
+
+    // 5. 기존 초기화 로직 유지
     await fillVendorFilterOnly(); 
     await loadPharmacyName();
     
     const tableBody = document.getElementById('ledgerTableBody');
-    tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:50px; color:#666;">🔎 조회하실 <b>거래처를 선택</b>해 주세요.</td></tr>';
+    if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:50px; color:#666;">🔎 조회하실 <b>거래처를 선택</b>해 주세요.</td></tr>';
+    }
 });
 
 async function loadPharmacyName() {
@@ -312,3 +423,158 @@ async function addQuickItem() {
         alert("저장에 실패했습니다: " + e.message);
     }
 }
+
+// logic-ledger.js
+
+// 삭제 처리 함수
+// logic-ledger.js
+
+// logic-ledger.js
+
+// logic-ledger.js
+
+async function deleteEntry(id) {
+    if (!id) return;
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    // [수정] 이미지 확인 결과, 컬렉션 이름은 'transactions' 입니다!
+    const COLLECTION_NAME = "transactions"; 
+
+    try {
+        await db.collection(COLLECTION_NAME).doc(id).delete();
+        
+        alert("DB에서 영구 삭제되었습니다.");
+        
+        // 다시 목록 불러오기
+        if (typeof loadLedgerData === 'function') {
+            await loadLedgerData(); 
+        } else {
+            location.reload(); 
+        }
+
+    } catch (error) {
+        console.error("삭제 실패:", error);
+        alert("삭제 실패: " + error.message);
+    }
+}
+
+// [1] 수정 모달 열기
+// [1] 수정 모달 열기
+// [1] 수정 팝업 내 실시간 합계 계산
+function calcEditTotal() {
+    const supplyInput = document.getElementById('editSupply');
+    const vatInput = document.getElementById('editVat');
+    const totalDisplay = document.getElementById('editTotalDisplay');
+
+    // 1. 공급가 가져오기
+    let supply = Number(supplyInput.value) || 0;
+
+    // 2. 세액 자동 계산 (공급가의 10%, 소수점 제거)
+    let vat = Math.floor(supply * 0.1);
+    vatInput.value = vat;
+
+    // 3. 합계 계산 및 표시
+    let total = supply + vat;
+    totalDisplay.value = total.toLocaleString();
+}
+function updateEditTotalOnly() {
+    const supply = Number(document.getElementById('editSupply').value) || 0;
+    const vat = Number(document.getElementById('editVat').value) || 0;
+    const total = supply + vat;
+    document.getElementById('editTotalDisplay').value = total.toLocaleString();
+}
+// [2] 수정 모달 열 때 모든 항목 채우기
+function openEditModal(docId) {
+    const item = allData.find(p => p.id === docId);
+    if (!item) return;
+
+    // 기본 정보 채우기
+    document.getElementById('editDocId').value = docId;
+    document.getElementById('editDate').value = item.date;
+    document.getElementById('editType').value = item.type;
+    document.getElementById('editVendor').value = item.vendor;
+    document.getElementById('editMemo').value = item.memo || '';
+    document.getElementById('editQty').value = item.qty || 0;
+    
+    // 금액 항목은 콤마를 찍어서 표시 (그래야 계산기가 작동함)
+    document.getElementById('editSupply').value = (item.supply || 0).toLocaleString();
+    document.getElementById('editVat').value = (item.vat || 0).toLocaleString();
+    document.getElementById('editTotalDisplay').value = (item.total || 0).toLocaleString();
+
+    document.getElementById('editModal').style.display = 'flex';
+}
+// [2] 수정 내용 저장 (DB 경로: transactions)
+// logic-ledger.js
+
+// [3] 수정 내용 저장 (transactions 컬렉션)
+async function saveEdit() {
+    const docId = document.getElementById('editDocId').value;
+    
+    // 저장 전 콤마 제거
+    const supply = unformatNum(document.getElementById('editSupply').value);
+    const vat = unformatNum(document.getElementById('editVat').value);
+    const total = unformatNum(document.getElementById('editTotalDisplay').value);
+
+    const updateData = {
+        date: document.getElementById('editDate').value,
+        type: document.getElementById('editType').value,
+        vendor: document.getElementById('editVendor').value,
+        memo: document.getElementById('editMemo').value,
+        qty: Number(document.getElementById('editQty').value) || 0,
+        supply: supply,
+        vat: vat,
+        total: total
+    };
+
+    try {
+        await db.collection("transactions").doc(docId).update(updateData);
+        alert("수정되었습니다.");
+        closeEditModal();
+        loadLedgerData(); 
+    } catch (e) {
+        alert("수정 실패: " + e.message);
+    }
+}
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// [1] 숫자에 콤마 넣고 빼는 유틸리티
+function formatNum(n) { return n.toLocaleString(); }
+function unformatNum(s) { return Number(s.replace(/,/g, '')) || 0; }
+
+// [2] 공급가 입력 시 -> 세액(10%) & 합계 계산
+function onEditSupplyInput(el) {
+    let supply = unformatNum(el.value);
+    el.value = formatNum(supply); // 실시간 콤마
+
+    let vat = Math.floor(supply * 0.1);
+    let total = supply + vat;
+
+    document.getElementById('editVat').value = formatNum(vat);
+    document.getElementById('editTotalDisplay').value = formatNum(total);
+}
+
+// [3] 세액 수동 수정 시 -> 합계만 갱신
+function onEditVatInput(el) {
+    let vat = unformatNum(el.value);
+    el.value = formatNum(vat); // 실시간 콤마
+
+    let supply = unformatNum(document.getElementById('editSupply').value);
+    let total = supply + vat;
+
+    document.getElementById('editTotalDisplay').value = formatNum(total);
+}
+
+// [4] 합계(입고액) 입력 시 -> 공급가(1/1.1) & 세액 역산 (리버스)
+function onEditTotalInput(el) {
+    let total = unformatNum(el.value);
+    el.value = formatNum(total); // 실시간 콤마
+
+    let supply = Math.round(total / 1.1);
+    let vat = total - supply;
+
+    document.getElementById('editSupply').value = formatNum(supply);
+    document.getElementById('editVat').value = formatNum(vat);
+}
+

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>명세서 상세 입력 |<span class="pharmacy-name-display"></span></title>
+    <title>명세서 상세 입력</title>
     
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="style-write.css">
@@ -17,15 +17,17 @@
 </head>
 <body>
 
-<header>
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <a href="index.html" style="color: #333; text-decoration: none; font-size: 1.2rem;">
-            <i class="fas fa-arrow-left"></i>
+    <header>
+        <a href="index.html" class="logo">
+            <i class="fas fa-capsules"></i> <span class="pharmacy-name-display"></span>
         </a>
-        <h1>명세서 상세 입력</h1>
-    </div>
-</header>
-
+        <nav class="nav-links">
+            <a href="index.html" class="menu-btn">홈</a>
+            <a href="write.html" class="menu-btn">명세서 입력</a>
+            <a href="ledger.html" class="menu-btn">장부</a>
+            <a href="settings.html" class="menu-btn">설정</a>
+        </nav>
+    </header>
 <div class="container write-mode"> <aside class="sidebar">
         <div class="sidebar-header">
             <h3>대기 목록 <span id="queueCount" style="color:#2563eb">0</span></h3>
@@ -53,22 +55,24 @@
 
         <section class="form-section-bottom">
             <div class="center-paper">
-                <div class="common-info-bar">
-                    <div class="c-group">
-                        <label>날짜</label>
-                        <input type="date" id="dateInput" style="width: 140px;">
+                <div class="common-info-bar" style="display: flex; gap: 20px; align-items: flex-end; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                    <div class="c-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-size: 0.85rem; color: #64748b; font-weight: bold;">날짜</label>
+                        <input type="date" id="dateInput" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; height: 42px; box-sizing: border-box;">
                     </div>
-                    <div class="c-group">
-                        <label>구분</label>
-                        <select id="typeSelect" onchange="togglePaymentField()" style="width: 100px;">
-                            <option value="buy" selected>입고</option>
-                            <option value="pay">결제</option>
-                            <option value="return">반품</option>
+
+                    <div class="c-group" style="width: 130px; display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-size: 0.85rem; color: #64748b; font-weight: bold;">구분</label>
+                        <select id="typeSelect" onchange="togglePaymentField()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-size: 0.95rem; height: 42px; box-sizing: border-box;">
+                            <option value="buy" selected>입고(매입)</option>
+                            <option value="pay">결제(지출)</option>
+                            <option value="return">반품(지출)</option>
                         </select>
                     </div>
-                    <div class="c-group vendor-group">
-                        <label>거래처</label>
-                        <input type="text" id="vendorInput" list="vendorList" placeholder="거래처 검색/입력" autocomplete="off">
+
+                    <div class="c-group vendor-group" style="flex: 1.5; display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-size: 0.85rem; color: #64748b; font-weight: bold;">거래처</label>
+                        <input type="text" id="vendorInput" list="vendorList" placeholder="거래처 검색/입력" autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; height: 42px; box-sizing: border-box;">
                         <datalist id="vendorList"></datalist>
                     </div>
                 </div>
